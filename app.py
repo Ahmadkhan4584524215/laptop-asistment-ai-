@@ -15,10 +15,10 @@ st.sidebar.title("⚙️ Configuration")
 # .strip() automatically removes accidental hidden spaces from copy-pasting
 api_key = st.sidebar.text_input("Enter Google Gemini API Key", type="password").strip()
 
-# Model selection using the modern Gemini model naming conventions
+# Model selection using current active Gemini model identifiers
 model_choice = st.sidebar.selectbox(
     "Select Gemini Model",
-    ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+    ["gemini-3.8-flash", "gemini-3.5-flash-lite"],
     help="Ensure your key is freshly generated from Google AI Studio."
 )
 
@@ -51,7 +51,7 @@ def get_gemini_response(prompt, max_retries=3, delay=2):
                 return (
                     "❌ **API Key Error:** The key provided was rejected as invalid.\n\n"
                     "**Fixes:**\n"
-                    "1. Ensure you generated the key from **[Google AI Studio](https://aistudio.google.com/)** (not Google Cloud Console).\n"
+                    "1. Ensure you generated the key from **[Google AI Studio](https://aistudio.google.com/)**.\n"
                     "2. Double-check that there are no accidental spaces before or after your key."
                 )
             else:
