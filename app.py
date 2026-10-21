@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import pandas as pd
 import time
 
@@ -12,29 +12,32 @@ st.set_page_config(
 
 # Sidebar for API Key, Model Selection, and Navigation
 st.sidebar.title("⚙️ Configuration")
-api_key = st.sidebar.text_input("Enter Google Gemini API Key", type="password")
+# .strip() automatically removes accidental hidden spaces from copy-pasting
+api_key = st.sidebar.text_input("Enter Google Gemini API Key", type="password").strip()
 
-# Model selection to handle high demand / availability issues
+# Model selection using the modern Gemini model naming conventions
 model_choice = st.sidebar.selectbox(
     "Select Gemini Model",
-    ["gemini-1.5-flash", "gemini-1.5-pro"],
-    help="If one model experiences high demand (503 error), switch to the other."
+    ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+    help="Ensure your key is freshly generated from Google AI Studio."
 )
-
-if api_key:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_choice)
-else:
-    st.sidebar.warning("⚠️ Please enter your Gemini API key to use the app.")
 
 st.sidebar.markdown("---")
 app_mode = st.sidebar.radio("Navigation", ["🔍 Single Laptop Inspector", "⚔️ Head-to-Head Comparison"])
 
-# Helper function for Gemini calls with retry logic for 503 / high demand errors
+# Helper function using the official modern google-genai client
 def get_gemini_response(prompt, max_retries=3, delay=2):
+    if not api_key:
+        return "⚠️ Please enter your Gemini API key in the sidebar first."
+    
     for attempt in range(max_retries):
         try:
-            response = model.generate_content(prompt)
+            # Initialize the modern client explicitly with the user's key
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model=model_choice,
+                contents=prompt
+            )
             return response.text
         except Exception as e:
             error_str = str(e)
@@ -43,15 +46,17 @@ def get_gemini_response(prompt, max_retries=3, delay=2):
                     time.sleep(delay)
                     continue
                 else:
-                    return (
-                        "⚠️ **Gemini is currently experiencing high demand (503 Service Unavailable).**\n\n"
-                        "**How to fix this:**\n"
-                        "1. Wait a few seconds and try clicking the button again.\n"
-                        "2. Switch to **gemini-1.5-pro** (or vice versa) using the model dropdown in the sidebar."
-                    )
+                    return "⚠️ **Gemini servers are currently experiencing high demand (503). Please try again shortly.**"
+            elif "400" in error_str or "API_KEY_INVALID" in error_str:
+                return (
+                    "❌ **API Key Error:** The key provided was rejected as invalid.\n\n"
+                    "**Fixes:**\n"
+                    "1. Ensure you generated the key from **[Google AI Studio](https://aistudio.google.com/)** (not Google Cloud Console).\n"
+                    "2. Double-check that there are no accidental spaces before or after your key."
+                )
             else:
                 return f"Error communicating with Gemini API: {e}"
-    return "Error: Maximum retry attempts reached due to high server demand."
+    return "Error: Maximum retry attempts reached."
 
 # --- TAB 1: SINGLE LAPTOP INSPECTOR ---
 if app_mode == "🔍 Single Laptop Inspector":
@@ -62,7 +67,6 @@ if app_mode == "🔍 Single Laptop Inspector":
 
     if st.button("Analyze Laptop", type="primary"):
         if not api_key:
-      
             st.error("Please provide your Gemini API key in the sidebar.")
         elif not laptop_name.strip():
             st.warning("Please enter a valid laptop name.")
