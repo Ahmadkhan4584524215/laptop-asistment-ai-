@@ -24,8 +24,8 @@ from google.genai import types
 # Configuration
 # --------------------------------------------------------------------------- #
 APP_NAME = "LapScope"
-DEFAULT_MODEL = "gemini-3.5-flash"  # override with GEMINI_MODEL or the sidebar
-FALLBACK_MODELS = ["gemini-flash-latest", "gemini-2.5-flash"]
+DEFAULT_MODEL = "gemini-3.8-flash"  # override with GEMINI_MODEL or the sidebar
+FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-flash-latest"]
 MAX_COMPARE = 4
 MAX_NAME_LEN = 120
 
